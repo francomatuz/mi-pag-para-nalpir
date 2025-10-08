@@ -216,7 +216,7 @@ public class MatchearDNI {
                         // Verificar similitud de nombres
                         double similitud = similitudNombre(nombreSinDNI, persona.nombreyapellido);
 
-                        if (similitud >= 0.60) {
+                        if (similitud >= 0.51) {
                             resultados.add(new Resultado(
                                 cuenta,
                                 nombreSinDNI,
