@@ -279,13 +279,34 @@ public class MatchearDNI {
 
             bw.close();
 
-            // Guardar rechazados en archivo separado
+            // Guardar rechazados en archivo separado Y agrupados por rangos
             System.out.println("\nGuardando rechazados por nombre diferente...");
+
+            // Archivo general de rechazados
             BufferedWriter bwRechazados = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream("rechazados_por_nombre.txt"), "ISO-8859-1")
             );
 
-            bwRechazados.write("\"cuenta\";\"nombre_sin_dni\";\"nombre_con_dni\";\"dni_encontrado\";\"similitud\"\n");
+            // Archivos por rangos de similitud
+            BufferedWriter bw50 = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("rechazados_50_porciento.txt"), "ISO-8859-1")
+            );
+            BufferedWriter bw49_30 = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("rechazados_49_a_30_porciento.txt"), "ISO-8859-1")
+            );
+            BufferedWriter bw29_10 = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("rechazados_29_a_10_porciento.txt"), "ISO-8859-1")
+            );
+            BufferedWriter bw09_0 = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("rechazados_09_a_0_porciento.txt"), "ISO-8859-1")
+            );
+
+            String header = "\"cuenta\";\"nombre_sin_dni\";\"nombre_con_dni\";\"dni_encontrado\";\"similitud\"\n";
+            bwRechazados.write(header);
+            bw50.write(header);
+            bw49_30.write(header);
+            bw29_10.write(header);
+            bw09_0.write(header);
 
             for (Resultado r : resultados) {
                 if (r.dni.equals("RECHAZADO_NOMBRE_DIFERENTE")) {
@@ -295,13 +316,39 @@ public class MatchearDNI {
                     String nombreConDNI = persona != null ? persona.nombreyapellido : "N/A";
                     String dniEncontrado = persona != null ? persona.dni : "N/A";
 
-                    bwRechazados.write(String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
-                        r.cuenta, r.nombre, nombreConDNI, dniEncontrado, r.similitud));
+                    String lineaRechazado = String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre, nombreConDNI, dniEncontrado, r.similitud);
+
+                    // Escribir en archivo general
+                    bwRechazados.write(lineaRechazado);
+
+                    // Determinar rango y escribir en archivo correspondiente
+                    double similitud = Double.parseDouble(r.similitud.replace("%", ""));
+
+                    if (similitud == 50.0) {
+                        bw50.write(lineaRechazado);
+                    } else if (similitud >= 30.0 && similitud <= 49.0) {
+                        bw49_30.write(lineaRechazado);
+                    } else if (similitud >= 10.0 && similitud <= 29.0) {
+                        bw29_10.write(lineaRechazado);
+                    } else if (similitud >= 0.0 && similitud <= 9.0) {
+                        bw09_0.write(lineaRechazado);
+                    }
                 }
             }
 
             bwRechazados.close();
-            System.out.println("Archivo de rechazados guardado como 'rechazados_por_nombre.txt'");
+            bw50.close();
+            bw49_30.close();
+            bw29_10.close();
+            bw09_0.close();
+
+            System.out.println("Archivos de rechazados guardados:");
+            System.out.println("  - rechazados_por_nombre.txt (todos)");
+            System.out.println("  - rechazados_50_porciento.txt");
+            System.out.println("  - rechazados_49_a_30_porciento.txt");
+            System.out.println("  - rechazados_29_a_10_porciento.txt");
+            System.out.println("  - rechazados_09_a_0_porciento.txt");
 
             // Guardar no encontrados en archivo separado
             System.out.println("\nGuardando no encontrados por cuenta...");
