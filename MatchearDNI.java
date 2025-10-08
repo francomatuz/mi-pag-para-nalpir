@@ -323,7 +323,7 @@ public class MatchearDNI {
                     bwRechazados.write(lineaRechazado);
 
                     // Determinar rango y escribir en archivo correspondiente
-                    double similitud = Double.parseDouble(r.similitud.replace("%", ""));
+                    double similitud = Double.parseDouble(r.similitud.replace("%", "").replace(",", "."));
 
                     if (similitud == 50.0) {
                         bw50.write(lineaRechazado);
