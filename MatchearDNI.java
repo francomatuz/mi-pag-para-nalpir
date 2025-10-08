@@ -279,7 +279,49 @@ public class MatchearDNI {
 
             bw.close();
 
-            System.out.println("¡Proceso completado! Archivo guardado como 'resultado_matcheado.txt'");
+            // Guardar rechazados en archivo separado
+            System.out.println("\nGuardando rechazados por nombre diferente...");
+            BufferedWriter bwRechazados = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("rechazados_por_nombre.txt"), "ISO-8859-1")
+            );
+
+            bwRechazados.write("\"cuenta\";\"nombre_sin_dni\";\"nombre_con_dni\";\"dni_encontrado\";\"similitud\"\n");
+
+            for (Resultado r : resultados) {
+                if (r.dni.equals("RECHAZADO_NOMBRE_DIFERENTE")) {
+                    // Buscar el nombre que se encontró con DNI
+                    String cuentaNorm = normalizarCuenta(r.cuenta);
+                    PersonaConDNI persona = dniDict.get(cuentaNorm);
+                    String nombreConDNI = persona != null ? persona.nombreyapellido : "N/A";
+                    String dniEncontrado = persona != null ? persona.dni : "N/A";
+
+                    bwRechazados.write(String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre, nombreConDNI, dniEncontrado, r.similitud));
+                }
+            }
+
+            bwRechazados.close();
+            System.out.println("Archivo de rechazados guardado como 'rechazados_por_nombre.txt'");
+
+            // Guardar no encontrados en archivo separado
+            System.out.println("\nGuardando no encontrados por cuenta...");
+            BufferedWriter bwNoEncontrados = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("no_encontrados_por_cuenta.txt"), "ISO-8859-1")
+            );
+
+            bwNoEncontrados.write("\"cuenta\";\"nombre\"\n");
+
+            for (Resultado r : resultados) {
+                if (r.dni.equals("NO_ENCONTRADO")) {
+                    bwNoEncontrados.write(String.format("\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre));
+                }
+            }
+
+            bwNoEncontrados.close();
+            System.out.println("Archivo de no encontrados guardado como 'no_encontrados_por_cuenta.txt'");
+
+            System.out.println("\n¡Proceso completado! Archivo guardado como 'resultado_matcheado.txt'");
             System.out.println("\nColumnas del archivo resultado:");
             System.out.println("- cuenta: número de cuenta original");
             System.out.println("- nombre: nombre del archivo sin_dni");
