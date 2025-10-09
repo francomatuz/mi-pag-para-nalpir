@@ -120,6 +120,19 @@ public class MatchearDNI {
         return Math.max(similitudDirecta, cobertura);
     }
 
+    // Genera una contraseña aleatoria de 9 caracteres (letras y números)
+    public static String generarPasswordAleatoria() {
+        String caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder password = new StringBuilder();
+        Random random = new Random();
+
+        for (int i = 0; i < 9; i++) {
+            password.append(caracteres.charAt(random.nextInt(caracteres.length())));
+        }
+
+        return password.toString();
+    }
+
     // Parsea una línea CSV considerando comillas y punto y coma
     public static String[] parsearLineaCSV(String linea) {
         List<String> campos = new ArrayList<>();
@@ -194,7 +207,8 @@ public class MatchearDNI {
             List<Resultado> resultados = new ArrayList<>();
             int matcheados = 0;
             int noMatcheados = 0;
-            int rechazadosPorNombre = 0;
+            // int rechazadosPorNombre = 0;  // COMENTADO: Ya no usamos rechazados
+            Map<String, Integer> contadorPorCod = new HashMap<>();  // Para contar por COD
 
             brSinDNI.readLine(); // Saltar header
             int idx = 0;
@@ -216,6 +230,20 @@ public class MatchearDNI {
                         // Verificar similitud de nombres
                         double similitud = similitudNombre(nombreSinDNI, persona.nombreyapellido);
 
+                        // NUEVO: Agregar TODOS los encontrados con cualquier similitud
+                        resultados.add(new Resultado(
+                            cuenta,
+                            nombreSinDNI,
+                            persona.dni,
+                            persona.cod,
+                            String.format("%.2f%%", similitud * 100)
+                        ));
+                        matcheados++;
+
+                        // Contar por COD
+                        contadorPorCod.put(persona.cod, contadorPorCod.getOrDefault(persona.cod, 0) + 1);
+
+                        /* COMENTADO: Lógica anterior con umbral de 51%
                         if (similitud >= 0.51) {
                             resultados.add(new Resultado(
                                 cuenta,
@@ -235,13 +263,16 @@ public class MatchearDNI {
                             ));
                             rechazadosPorNombre++;
                         }
+                        */
                     } else {
+                        // NUEVO: Generar contraseña aleatoria para los no encontrados
+                        String passwordAleatoria = generarPasswordAleatoria();
                         resultados.add(new Resultado(
                             cuenta,
                             nombreSinDNI,
-                            "NO_ENCONTRADO",
+                            passwordAleatoria,
                             "",
-                            "N/A"
+                            "NO_ENCONTRADO"
                         ));
                         noMatcheados++;
                     }
@@ -249,36 +280,69 @@ public class MatchearDNI {
                     if (idx % 10000 == 0) {
                         System.out.println("Procesados " + idx + " registros... " +
                             "(Matcheados: " + matcheados +
-                            ", No encontrados: " + noMatcheados +
-                            ", Rechazados: " + rechazadosPorNombre + ")");
+                            ", No encontrados: " + noMatcheados + ")");
                     }
                 }
             }
             brSinDNI.close();
 
-            // Paso 3: Guardar resultados
-            System.out.println("\nTotal procesados: " + idx);
+            // Paso 3: Mostrar estadísticas por COD
+            System.out.println("\n=== ESTADÍSTICAS POR COD ===");
+            List<Map.Entry<String, Integer>> listaOrdenada = new ArrayList<>(contadorPorCod.entrySet());
+            listaOrdenada.sort((a, b) -> a.getKey().compareTo(b.getKey())); // Ordenar por COD
+
+            for (Map.Entry<String, Integer> entry : listaOrdenada) {
+                System.out.println("COD " + entry.getKey() + ": " + entry.getValue() + " personas");
+            }
+
+            // Paso 4: Guardar resultados
+            System.out.println("\n=== RESUMEN TOTAL ===");
+            System.out.println("Total procesados: " + idx);
             System.out.println("Matcheados exitosamente: " + matcheados);
-            System.out.println("Rechazados por nombre diferente: " + rechazadosPorNombre);
-            System.out.println("No encontrados: " + noMatcheados);
+            // System.out.println("Rechazados por nombre diferente: " + rechazadosPorNombre);  // COMENTADO
+            System.out.println("No encontrados (con password generada): " + noMatcheados);
 
             System.out.println("\nGuardando resultados...");
 
-            BufferedWriter bw = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(archivoResultado), "ISO-8859-1")
+            // NUEVO: Archivo con TODOS los encontrados (cualquier similitud)
+            BufferedWriter bwTodos = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("todos_encontrados.txt"), "ISO-8859-1")
             );
 
-            // Escribir header
-            bw.write("\"cuenta\";\"nombre\";\"dni\";\"cod\";\"similitud\"\n");
+            // NUEVO: Archivo solo con los de 51% o más
+            BufferedWriter bw51Plus = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("encontrados_51_o_mas.txt"), "ISO-8859-1")
+            );
 
-            // Escribir resultados
+            String headerEncontrados = "\"cuenta\";\"nombre\";\"dni\";\"cod\";\"similitud\"\n";
+            bwTodos.write(headerEncontrados);
+            bw51Plus.write(headerEncontrados);
+
+            // Escribir resultados de encontrados
             for (Resultado r : resultados) {
-                bw.write(String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
-                    r.cuenta, r.nombre, r.dni, r.cod, r.similitud));
+                if (!r.similitud.equals("NO_ENCONTRADO")) {
+                    String lineaEncontrado = String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre, r.dni, r.cod, r.similitud);
+
+                    // Escribir en archivo de TODOS
+                    bwTodos.write(lineaEncontrado);
+
+                    // Escribir en archivo de 51% o más
+                    double similitud = Double.parseDouble(r.similitud.replace("%", "").replace(",", "."));
+                    if (similitud >= 51.0) {
+                        bw51Plus.write(lineaEncontrado);
+                    }
+                }
             }
 
-            bw.close();
+            bwTodos.close();
+            bw51Plus.close();
 
+            System.out.println("Archivos de encontrados guardados:");
+            System.out.println("  - todos_encontrados.txt (todas las similitudes)");
+            System.out.println("  - encontrados_51_o_mas.txt (solo >= 51%)");
+
+            /* COMENTADO: Código anterior de rechazados por rangos
             // Guardar rechazados en archivo separado Y agrupados por rangos
             System.out.println("\nGuardando rechazados por nombre diferente...");
 
@@ -375,6 +439,31 @@ public class MatchearDNI {
             System.out.println("- dni: DNI encontrado (o 'NO_ENCONTRADO' / 'RECHAZADO_NOMBRE_DIFERENTE')");
             System.out.println("- cod: código encontrado");
             System.out.println("- similitud: porcentaje de similitud entre nombres");
+            */
+
+            // NUEVO: Guardar no encontrados con contraseña generada
+            System.out.println("\nGuardando no encontrados con contraseñas...");
+            BufferedWriter bwNoEncontrados = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("no_encontrados_con_password.txt"), "ISO-8859-1")
+            );
+
+            bwNoEncontrados.write("\"cuenta\";\"nombre\";\"password\"\n");
+
+            for (Resultado r : resultados) {
+                if (r.similitud.equals("NO_ENCONTRADO")) {
+                    bwNoEncontrados.write(String.format("\"%s\";\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre, r.dni));  // El dni contiene la password generada
+                }
+            }
+
+            bwNoEncontrados.close();
+            System.out.println("Archivo de no encontrados guardado como 'no_encontrados_con_password.txt'");
+
+            System.out.println("\n¡Proceso completado!");
+            System.out.println("\nArchivos generados:");
+            System.out.println("- todos_encontrados.txt: Todos los matcheos (cualquier similitud)");
+            System.out.println("- encontrados_51_o_mas.txt: Solo matcheos con 51% o más de similitud");
+            System.out.println("- no_encontrados_con_password.txt: Cuentas no encontradas con contraseñas generadas");
 
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
