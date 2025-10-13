@@ -314,23 +314,25 @@ public class MatchearDNI {
                 new OutputStreamWriter(new FileOutputStream("encontrados_51_o_mas.txt"), "ISO-8859-1")
             );
 
-            String headerEncontrados = "\"cuenta\";\"nombre\";\"dni\";\"cod\";\"similitud\"\n";
-            bwTodos.write(headerEncontrados);
-            bw51Plus.write(headerEncontrados);
+            String headerTodos = "\"cuenta\";\"nombre\";\"dni\";\"cod\"\n";
+            String header51Plus = "\"cuenta\";\"nombre\";\"dni\";\"cod\";\"similitud\"\n";
+            bwTodos.write(headerTodos);
+            bw51Plus.write(header51Plus);
 
             // Escribir resultados de encontrados
             for (Resultado r : resultados) {
                 if (!r.similitud.equals("NO_ENCONTRADO")) {
-                    String lineaEncontrado = String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
-                        r.cuenta, r.nombre, r.dni, r.cod, r.similitud);
+                    // Archivo TODOS: sin similitud
+                    String lineaTodos = String.format("\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre, r.dni, r.cod);
+                    bwTodos.write(lineaTodos);
 
-                    // Escribir en archivo de TODOS
-                    bwTodos.write(lineaEncontrado);
-
-                    // Escribir en archivo de 51% o más
+                    // Escribir en archivo de 51% o más (con similitud)
                     double similitud = Double.parseDouble(r.similitud.replace("%", "").replace(",", "."));
                     if (similitud >= 51.0) {
-                        bw51Plus.write(lineaEncontrado);
+                        String linea51Plus = String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                            r.cuenta, r.nombre, r.dni, r.cod, r.similitud);
+                        bw51Plus.write(linea51Plus);
                     }
                 }
             }
