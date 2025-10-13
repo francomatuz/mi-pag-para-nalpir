@@ -344,6 +344,23 @@ public class MatchearDNI {
             System.out.println("  - todos_encontrados.txt (todas las similitudes)");
             System.out.println("  - encontrados_51_o_mas.txt (solo >= 51%)");
 
+            // NUEVO: Generar archivo input.txt con solo DNI (sin ceros adelante)
+            System.out.println("\nGenerando archivo input.txt con DNIs...");
+            BufferedWriter bwInput = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("input.txt"), "ISO-8859-1")
+            );
+
+            for (Resultado r : resultados) {
+                if (!r.similitud.equals("NO_ENCONTRADO")) {
+                    // Quitar ceros adelante del DNI
+                    String dniSinCeros = r.dni.replaceFirst("^0+(?!$)", "");
+                    bwInput.write(dniSinCeros + "\n");
+                }
+            }
+
+            bwInput.close();
+            System.out.println("Archivo input.txt generado con DNIs línea por línea (sin ceros adelante)");
+
             /* COMENTADO: Código anterior de rechazados por rangos
             // Guardar rechazados en archivo separado Y agrupados por rangos
             System.out.println("\nGuardando rechazados por nombre diferente...");
