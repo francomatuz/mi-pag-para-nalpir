@@ -72,6 +72,9 @@ def encriptar_cuenta_worker(registro: Dict[str, str]) -> Dict[str, str]:
 def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
     """Llama a la API para encriptar una cuenta"""
 
+    # DEBUG: Ver qué valores llegan
+    print(f"DEBUG INPUT - Cuenta: '{cuenta}' | COD: '{cod}'")
+
     body = {
         "DFHCOMMAREA": {
             "WS_CLIENT_ID": cod,
@@ -85,6 +88,9 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
             }
         }
     }
+
+    # DEBUG: Ver el body que se envía
+    print(f"DEBUG BODY: {json.dumps(body, indent=2)}")
 
     try:
         response = requests.post(API_URL, headers=HEADERS, json=body, timeout=10, verify=False)
@@ -187,6 +193,10 @@ def main():
 
     # Leer archivo
     cuentas = leer_cuentas(ARCHIVO_ENTRADA)
+
+    # DEBUG: Procesar solo las primeras 10 cuentas
+    cuentas = cuentas[:10]
+    print(f"MODO DEBUG: Procesando solo {len(cuentas)} cuentas\n")
 
     # Procesar y encriptar
     resultados = procesar_cuentas(cuentas)
