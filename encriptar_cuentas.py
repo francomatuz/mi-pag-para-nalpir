@@ -95,7 +95,7 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
     print(f"DEBUG BODY: {json.dumps(body, indent=2)}")
 
     try:
-        response = requests.post(API_URL, headers=HEADERS, json=body, timeout=10, verify=False)
+        response = requests.post(API_URL, headers=HEADERS, data=json.dumps(body), timeout=10, verify=False)
         response.raise_for_status()
 
         data = response.json()
