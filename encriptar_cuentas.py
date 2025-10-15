@@ -3,6 +3,11 @@ import requests
 import json
 import time
 from typing import List, Dict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import urllib3
+
+# Suprimir warnings de SSL
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 API_URL = ""
@@ -20,9 +25,10 @@ ARCHIVO_ENTRADA = "todos_encontrados.txt"
 ARCHIVO_SALIDA = "cuentas_encriptadas.txt"
 
 
-BATCH_SIZE = 100  
-DELAY_ENTRE_REQUESTS = 0.1  
-MAX_REINTENTOS = 3  
+BATCH_SIZE = 100
+DELAY_ENTRE_REQUESTS = 0.1
+MAX_REINTENTOS = 3
+MAX_WORKERS = 20  # Número de threads paralelos (ajustar según necesidad)  
 
 
 
@@ -47,6 +53,22 @@ def leer_cuentas(archivo: str) -> List[Dict[str, str]]:
     return cuentas
 
 
+def encriptar_cuenta_worker(registro: Dict[str, str]) -> Dict[str, str]:
+    """Worker que encripta una cuenta (para usar en paralelo)"""
+    cuenta = registro['cuenta']
+    cod = registro['cod']
+
+    cuenta_encriptada = encriptar_cuenta(cuenta, cod)
+
+    return {
+        'cuenta': cuenta,
+        'cuenta_encriptada': cuenta_encriptada,
+        'nombre': registro['nombre'],
+        'dni': registro['dni'],
+        'cod': cod
+    }
+
+
 def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
     """Llama a la API para encriptar una cuenta"""
 
@@ -65,7 +87,7 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
     }
 
     try:
-        response = requests.post(API_URL, headers=HEADERS, json=body, timeout=10)
+        response = requests.post(API_URL, headers=HEADERS, json=body, timeout=10, verify=False)
         response.raise_for_status()
 
         data = response.json()
@@ -75,53 +97,54 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
 
     except Exception as e:
         if reintentos < MAX_REINTENTOS:
-            print(f" Error encriptando cuenta {cuenta} (intento {reintentos + 1}/{MAX_REINTENTOS}): {e}")
-            time.sleep(1)
+            time.sleep(0.5)
             return encriptar_cuenta(cuenta, cod, reintentos + 1)
         else:
-            print(f" FALLO después de {MAX_REINTENTOS} intentos: cuenta {cuenta}")
+            print(f" ✗ FALLO cuenta {cuenta}: {str(e)[:50]}")
             return "ERROR_ENCRIPTACION"
 
 
 def procesar_cuentas(cuentas: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    """Procesa todas las cuentas y las encripta"""
+    """Procesa todas las cuentas y las encripta EN PARALELO"""
 
     resultados = []
     total = len(cuentas)
+    procesados = 0
 
     print(f"\nIniciando encriptación de {total} cuentas...")
+    print(f"Usando {MAX_WORKERS} threads en paralelo")
     print("=" * 60)
 
-    for i, registro in enumerate(cuentas, 1):
-        cuenta = registro['cuenta']
-        cod = registro['cod']
+    inicio = time.time()
 
-        # Encriptar cuenta
-        cuenta_encriptada = encriptar_cuenta(cuenta, cod)
+    # Procesar en paralelo con ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        # Enviar todas las tareas
+        futures = {executor.submit(encriptar_cuenta_worker, registro): registro for registro in cuentas}
 
-        # Guardar resultado
-        resultados.append({
-            'cuenta': cuenta,
-            'cuenta_encriptada': cuenta_encriptada,
-            'nombre': registro['nombre'],
-            'dni': registro['dni'],
-            'cod': cod
-        })
+        # Ir recolectando resultados a medida que terminan
+        for future in as_completed(futures):
+            resultado = future.result()
+            resultados.append(resultado)
+            procesados += 1
 
-        # Mostrar progreso
-        if i % 10 == 0 or i == total:
-            porcentaje = (i / total) * 100
-            print(f"Procesados: {i}/{total} ({porcentaje:.1f}%) - Cuenta: {cuenta} → {cuenta_encriptada[:20]}...")
+            # Mostrar progreso cada 100 registros
+            if procesados % 100 == 0 or procesados == total:
+                porcentaje = (procesados / total) * 100
+                transcurrido = time.time() - inicio
+                velocidad = procesados / transcurrido if transcurrido > 0 else 0
+                tiempo_restante = (total - procesados) / velocidad if velocidad > 0 else 0
 
-        # Guardar cada BATCH_SIZE registros (por seguridad)
-        if i % BATCH_SIZE == 0:
-            guardar_resultados(resultados, ARCHIVO_SALIDA, modo='parcial')
+                print(f"Procesados: {procesados}/{total} ({porcentaje:.1f}%) | "
+                      f"Velocidad: {velocidad:.0f} cuentas/seg | "
+                      f"Restante: {tiempo_restante/60:.1f} min")
 
-        # Delay entre requests
-        time.sleep(DELAY_ENTRE_REQUESTS)
+            # Guardar cada BATCH_SIZE registros (por seguridad)
+            if procesados % BATCH_SIZE == 0:
+                guardar_resultados(resultados, ARCHIVO_SALIDA, modo='parcial')
 
     print("=" * 60)
-    print(f"Encriptación completada!")
+    print(f"✓ Encriptación completada en {(time.time() - inicio)/60:.1f} minutos!")
 
     return resultados
 
