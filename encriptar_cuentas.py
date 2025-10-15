@@ -85,8 +85,10 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
         }
     })
 
-    # DEBUG: Ver el body que se envía
-    print(f"DEBUG BODY: {payload}")
+    # DEBUG: Comparar payloads
+    print(f"PAYLOAD LENGTH: {len(payload)}")
+    print(f"PAYLOAD: {payload}")
+    print(f"CUENTA TIPO: {type(cuenta)} - VALOR: '{cuenta}'")
 
     try:
         response = requests.request("POST", API_URL, headers=HEADERS, data=payload, verify=False)
