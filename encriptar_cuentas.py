@@ -20,10 +20,9 @@ ARCHIVO_ENTRADA = "todos_encontrados.txt"
 ARCHIVO_SALIDA = "cuentas_encriptadas.txt"
 
 
-BATCH_SIZE = 100
-DELAY_ENTRE_REQUESTS = 0.1
+BATCH_SIZE = 500  # Guardar cada 500 para ir mas rapido
 MAX_REINTENTOS = 3
-MAX_WORKERS = 1  # Número de threads paralelos (ajustar según necesidad)  
+MAX_WORKERS = 30  # Aumentado a 30 threads para mayor velocidad  
 
 
 
