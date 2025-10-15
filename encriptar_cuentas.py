@@ -13,15 +13,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 API_URL = ""
 
 HEADERS = {
-    "Cache-Control": "no-cache",
-    "Content-Type": "application/json",
-    "User-Agent": "PostmanRuntime/7.39.0",
-    "Accept": "*/*",
-    "Accept-Encoding": "gzip,deflate,br",  
-    "Connection": "keep-alive"
+    "Content-Type": "application/json"
 }
-
-# Nota: Postman-Token, Content-Length y Host se calculan automáticamente por requests
 
 ARCHIVO_ENTRADA = "todos_encontrados.txt"
 ARCHIVO_SALIDA = "cuentas_encriptadas.txt"
@@ -30,7 +23,7 @@ ARCHIVO_SALIDA = "cuentas_encriptadas.txt"
 BATCH_SIZE = 100
 DELAY_ENTRE_REQUESTS = 0.1
 MAX_REINTENTOS = 3
-MAX_WORKERS = 20  # Número de threads paralelos (ajustar según necesidad)  
+MAX_WORKERS = 1  # Número de threads paralelos (ajustar según necesidad)  
 
 
 
@@ -91,11 +84,14 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
         }
     }
 
+    # Convertir body a JSON string (igual que Postman)
+    payload = json.dumps(body)
+
     # DEBUG: Ver el body que se envía
-    print(f"DEBUG BODY: {json.dumps(body, indent=2)}")
+    print(f"DEBUG BODY: {payload}")
 
     try:
-        response = requests.post(API_URL, headers=HEADERS, data=json.dumps(body), timeout=10, verify=False)
+        response = requests.request("POST", API_URL, headers=HEADERS, data=payload, verify=False)
         response.raise_for_status()
 
         data = response.json()
