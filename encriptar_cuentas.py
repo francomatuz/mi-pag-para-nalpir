@@ -70,7 +70,8 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
     # DEBUG: Ver qué valores llegan
     print(f"DEBUG INPUT - Cuenta: '{cuenta}' | COD: '{cod}'")
 
-    body = {
+    # Crear payload exactamente como Postman
+    payload = json.dumps({
         "DFHCOMMAREA": {
             "WS_CLIENT_ID": cod,
             "WS_INP_ENV": "",
@@ -82,10 +83,7 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
                 "WS_ENC_EXPDT": ""
             }
         }
-    }
-
-    # Convertir body a JSON string (igual que Postman)
-    payload = json.dumps(body)
+    })
 
     # DEBUG: Ver el body que se envía
     print(f"DEBUG BODY: {payload}")
