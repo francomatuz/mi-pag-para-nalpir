@@ -17,9 +17,11 @@ HEADERS = {
     "Content-Type": "application/json",
     "User-Agent": "PostmanRuntime/7.39.0",
     "Accept": "*/*",
-    "Accept-Encoding": "",
+    "Accept-Encoding": "gzip,deflate,br",  
     "Connection": "keep-alive"
 }
+
+# Nota: Postman-Token, Content-Length y Host se calculan automáticamente por requests
 
 ARCHIVO_ENTRADA = "todos_encontrados.txt"
 ARCHIVO_SALIDA = "cuentas_encriptadas.txt"
@@ -49,7 +51,7 @@ def leer_cuentas(archivo: str) -> List[Dict[str, str]]:
                 'cod': row['cod']
             })
 
-    print(f"✓ {len(cuentas)} registros leídos")
+    print(f"{len(cuentas)} registros leidos")
     return cuentas
 
 
@@ -81,10 +83,10 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
             "WS_INP_ENV": "",
             "WS_ENC_FIELDS": {
                 "WS_ENC_ACCT": cuenta,
-                "WS_INP": "",
-                "WS_INP2": "",
-                "WS_INP3": "",
-                "WS_INP4": ""
+                "WS_ENC_CARD_NBR": "",
+                "WS_ENC_CARD_NAME": "",
+                "WS_ENC_CVV": "",
+                "WS_ENC_EXPDT": ""
             }
         }
     }
@@ -110,7 +112,7 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
             time.sleep(0.5)
             return encriptar_cuenta(cuenta, cod, reintentos + 1)
         else:
-            print(f" ✗ FALLO cuenta {cuenta}: {str(e)[:50]}")
+            print(f"FALLO cuenta {cuenta}: {str(e)[:50]}")
             return "ERROR_ENCRIPTACION"
 
 
@@ -154,7 +156,7 @@ def procesar_cuentas(cuentas: List[Dict[str, str]]) -> List[Dict[str, str]]:
                 guardar_resultados(resultados, ARCHIVO_SALIDA, modo='parcial')
 
     print("=" * 60)
-    print(f"✓ Encriptación completada en {(time.time() - inicio)/60:.1f} minutos!")
+    print(f"Encriptacion completada en {(time.time() - inicio)/60:.1f} minutos!")
 
     return resultados
 
@@ -179,7 +181,7 @@ def guardar_resultados(resultados: List[Dict[str, str]], archivo: str, modo='fin
             ])
 
     if modo == 'final':
-        print(f"\n Resultados guardados en: {archivo}")
+        print(f"\nResultados guardados en: {archivo}")
     else:
         print(f"  Guardado parcial: {len(resultados)} registros")
 
