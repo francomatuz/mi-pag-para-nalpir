@@ -91,6 +91,10 @@ def encriptar_cuenta(cuenta: str, cod: str, reintentos: int = 0) -> str:
         response.raise_for_status()
 
         data = response.json()
+
+        # DEBUG: Descomentar para ver respuesta completa
+        print(f"DEBUG Cuenta {cuenta}: {json.dumps(data, indent=2)}")
+
         cuenta_encriptada = data["DFHCOMMAREA"]["WS_ENC_FIELDS"]["WS_ENC_ACCT"]
 
         return cuenta_encriptada
