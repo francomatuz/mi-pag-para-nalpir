@@ -24,13 +24,15 @@ public class MatchearDNI {
         String dni;
         String cod;
         String similitud;
+        String mail;
 
-        Resultado(String cuenta, String nombre, String dni, String cod, String similitud) {
+        Resultado(String cuenta, String nombre, String dni, String cod, String similitud, String mail) {
             this.cuenta = cuenta;
             this.nombre = nombre;
             this.dni = dni;
             this.cod = cod;
             this.similitud = similitud;
+            this.mail = mail;
         }
     }
 
@@ -217,9 +219,10 @@ public class MatchearDNI {
                 idx++;
                 String[] campos = parsearLineaCSV(linea);
 
-                if (campos.length >= 2) {
+                if (campos.length >= 3) {
                     String cuenta = campos[0];
-                    String nombreSinDNI = campos[1];
+                    String mail = campos[1];
+                    String nombreSinDNI = campos[2];
 
                     String cuentaNorm = normalizarCuenta(cuenta);
 
@@ -236,7 +239,8 @@ public class MatchearDNI {
                             nombreSinDNI,
                             persona.dni,
                             persona.cod,
-                            String.format("%.2f%%", similitud * 100)
+                            String.format("%.2f%%", similitud * 100),
+                            mail
                         ));
                         matcheados++;
 
@@ -272,7 +276,8 @@ public class MatchearDNI {
                             nombreSinDNI,
                             passwordAleatoria,
                             "",
-                            "NO_ENCONTRADO"
+                            "NO_ENCONTRADO",
+                            mail
                         ));
                         noMatcheados++;
                     }
@@ -314,8 +319,8 @@ public class MatchearDNI {
                 new OutputStreamWriter(new FileOutputStream("encontrados_51_o_mas.txt"), "ISO-8859-1")
             );
 
-            String headerTodos = "\"cuenta\";\"nombre\";\"dni\";\"cod\"\n";
-            String header51Plus = "\"cuenta\";\"nombre\";\"dni\";\"cod\";\"similitud\"\n";
+            String headerTodos = "\"cuenta\";\"nombre\";\"dni\";\"cod\";\"mail\"\n";
+            String header51Plus = "\"cuenta\";\"nombre\";\"dni\";\"cod\";\"mail\";\"similitud\"\n";
             bwTodos.write(headerTodos);
             bw51Plus.write(header51Plus);
 
@@ -323,15 +328,15 @@ public class MatchearDNI {
             for (Resultado r : resultados) {
                 if (!r.similitud.equals("NO_ENCONTRADO")) {
                     // Archivo TODOS: sin similitud
-                    String lineaTodos = String.format("\"%s\";\"%s\";\"%s\";\"%s\"\n",
-                        r.cuenta, r.nombre, r.dni, r.cod);
+                    String lineaTodos = String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre, r.dni, r.cod, r.mail);
                     bwTodos.write(lineaTodos);
 
                     // Escribir en archivo de 51% o más (con similitud)
                     double similitud = Double.parseDouble(r.similitud.replace("%", "").replace(",", "."));
                     if (similitud >= 51.0) {
-                        String linea51Plus = String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
-                            r.cuenta, r.nombre, r.dni, r.cod, r.similitud);
+                        String linea51Plus = String.format("\"%s\";\"%s\";\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                            r.cuenta, r.nombre, r.dni, r.cod, r.mail, r.similitud);
                         bw51Plus.write(linea51Plus);
                     }
                 }
@@ -466,12 +471,12 @@ public class MatchearDNI {
                 new OutputStreamWriter(new FileOutputStream("no_encontrados_con_password.txt"), "ISO-8859-1")
             );
 
-            bwNoEncontrados.write("\"cuenta\";\"nombre\";\"password\"\n");
+            bwNoEncontrados.write("\"cuenta\";\"nombre\";\"mail\";\"password\"\n");
 
             for (Resultado r : resultados) {
                 if (r.similitud.equals("NO_ENCONTRADO")) {
-                    bwNoEncontrados.write(String.format("\"%s\";\"%s\";\"%s\"\n",
-                        r.cuenta, r.nombre, r.dni));  // El dni contiene la password generada
+                    bwNoEncontrados.write(String.format("\"%s\";\"%s\";\"%s\";\"%s\"\n",
+                        r.cuenta, r.nombre, r.mail, r.dni));  // El dni contiene la password generada
                 }
             }
 
