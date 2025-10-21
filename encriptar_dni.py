@@ -11,7 +11,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 # CONFIGURACION - COMPLETAR VALORES REALES
-API_URL_BASE = "https://[DOMINIO]/api"  # Completar con dominio real
+# Ejemplo: https://xxxx.xx.com:443/xxxx/x/xxx/email
+API_URL_BASE = "https://[DOMINIO]/[PATH]/email"  # Completar con URL real hasta /email
 
 HEADERS_BASE = {
     'Content-Type': 'application/json',
@@ -72,8 +73,11 @@ def encriptar_dni(cuenta_encriptada: str, dni: str, mail: str, cod: str, reinten
     # Quitar ceros adelante del COD para la URL
     cod_sin_ceros = cod.lstrip('0') or '0'
 
-    # Construir URL con COD sin ceros
-    url = f"{API_URL_BASE}/userEntity={cod_sin_ceros}"
+    # Quitar ceros adelante del DNI
+    dni_sin_ceros = dni.lstrip('0') or '0'
+
+    # Construir URL con COD sin ceros como query parameter
+    url = f"{API_URL_BASE}?userEntity={cod_sin_ceros}"
 
     # Construir username con COD completo (con ceros)
     headers = HEADERS_BASE.copy()
@@ -84,9 +88,13 @@ def encriptar_dni(cuenta_encriptada: str, dni: str, mail: str, cod: str, reinten
             "accountNumber": cuenta_encriptada,
             "additional": 0
         },
-        "email": mail,
-        "encryptionPassword": dni
+        "email": mail if mail else "",
+        "encryptionPassword": dni_sin_ceros
     })
+
+    # DEBUG: Imprimir URL y datos
+    print(f"URL: {url}")
+    print(f"Username: E{cod}WSDE | DNI: {dni_sin_ceros} | Mail: {mail if mail else 'VACIO'}")
 
     try:
         response = requests.request("PUT", url, headers=headers, data=payload, verify=False, timeout=10)

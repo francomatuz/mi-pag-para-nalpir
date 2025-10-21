@@ -180,7 +180,10 @@ def procesar_cuentas(cuentas: List[Dict[str, str]]) -> List[Dict[str, str]]:
 
 
 def guardar_resultados(resultados: List[Dict[str, str]], archivo: str, modo='final'):
-    """Guarda los resultados en un archivo CSV"""
+    """Guarda los resultados en un archivo CSV (solo exitosos, sin errores)"""
+
+    # Filtrar solo los que se encriptaron exitosamente (sin error)
+    exitosos = [r for r in resultados if not r.get('error')]
 
     with open(archivo, 'w', encoding='ISO-8859-1', newline='') as f:
         writer = csv.writer(f, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -188,8 +191,8 @@ def guardar_resultados(resultados: List[Dict[str, str]], archivo: str, modo='fin
         # Header
         writer.writerow(['cuenta', 'cuenta_encriptada', 'nombre', 'dni', 'cod'])
 
-        # Datos
-        for r in resultados:
+        # Datos - solo exitosos
+        for r in exitosos:
             writer.writerow([
                 r['cuenta'],
                 r['cuenta_encriptada'],
@@ -199,9 +202,9 @@ def guardar_resultados(resultados: List[Dict[str, str]], archivo: str, modo='fin
             ])
 
     if modo == 'final':
-        print(f"\nResultados guardados en: {archivo}")
+        print(f"\nResultados guardados en: {archivo} ({len(exitosos)} exitosos)")
     else:
-        print(f"  Guardado parcial: {len(resultados)} registros")
+        print(f"  Guardado parcial: {len(exitosos)} exitosos de {len(resultados)} procesados")
 
 
 def guardar_errores(resultados: List[Dict[str, str]], archivo: str):
