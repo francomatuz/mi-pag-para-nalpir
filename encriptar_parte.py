@@ -53,7 +53,8 @@ def leer_cuentas(archivo: str) -> List[Dict[str, str]]:
                     'cuenta': row['cuenta'],
                     'nombre': row['nombre'],
                     'dni': row['dni'],
-                    'cod': row['cod']
+                    'cod': row['cod'],
+                    'mail': row.get('mail', '')  # Agregar mail si existe
                 })
             else:
                 excluidos += 1
@@ -75,6 +76,7 @@ def encriptar_cuenta_worker(registro: Dict[str, str]) -> Dict[str, str]:
         'nombre': registro['nombre'],
         'dni': registro['dni'],
         'cod': cod,
+        'mail': registro['mail'],  # Heredar el mail
         'error': error_msg
     }
 
@@ -189,7 +191,7 @@ def guardar_resultados(resultados: List[Dict[str, str]], archivo: str, modo='fin
         writer = csv.writer(f, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(['cuenta', 'cuenta_encriptada', 'nombre', 'dni', 'cod'])
+        writer.writerow(['cuenta', 'cuenta_encriptada', 'nombre', 'dni', 'cod', 'mail'])
 
         # Datos - solo exitosos
         for r in exitosos:
@@ -198,7 +200,8 @@ def guardar_resultados(resultados: List[Dict[str, str]], archivo: str, modo='fin
                 r['cuenta_encriptada'],
                 r['nombre'],
                 r['dni'],
-                r['cod']
+                r['cod'],
+                r['mail']
             ])
 
     if modo == 'final':
@@ -220,7 +223,7 @@ def guardar_errores(resultados: List[Dict[str, str]], archivo: str):
         writer = csv.writer(f, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(['cuenta', 'nombre', 'dni', 'cod', 'tipo_error'])
+        writer.writerow(['cuenta', 'nombre', 'dni', 'cod', 'mail', 'tipo_error'])
 
         # Datos
         for r in errores:
@@ -229,6 +232,7 @@ def guardar_errores(resultados: List[Dict[str, str]], archivo: str):
                 r['nombre'],
                 r['dni'],
                 r['cod'],
+                r['mail'],
                 r['error']
             ])
 
