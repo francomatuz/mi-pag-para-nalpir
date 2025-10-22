@@ -2,7 +2,7 @@ import csv
 
 # Configuracion
 ARCHIVO_ENTRADA = "todos_encontrados.txt"
-NUM_PARTES = 5
+NUM_PARTES = 10
 
 print(f"Dividiendo {ARCHIVO_ENTRADA} en {NUM_PARTES} partes...")
 
@@ -38,6 +38,6 @@ for i in range(NUM_PARTES):
     print(f"Creado: {nombre_archivo} ({len(parte)} registros)")
 
 print("\nArchivos creados exitosamente!")
-print("\nAhora ejecuta en 5 terminales diferentes:")
+print(f"\nAhora ejecuta en {NUM_PARTES} terminales diferentes:")
 for i in range(NUM_PARTES):
-    print(f"  Terminal {i+1}: python encriptar_cuentas_parte{i+1}.py")
+    print(f"  Terminal {i+1}: python encriptar_parte.py {i+1}")
