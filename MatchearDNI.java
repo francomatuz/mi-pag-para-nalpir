@@ -9,11 +9,13 @@ public class MatchearDNI {
         String cod;
         String nombreyapellido;
         String dni;
+        String cuentaConCeros;  // NUEVO: Guardar la cuenta con ceros adelante
 
-        PersonaConDNI(String cod, String nombreyapellido, String dni) {
+        PersonaConDNI(String cod, String nombreyapellido, String dni, String cuentaConCeros) {
             this.cod = cod;
             this.nombreyapellido = nombreyapellido;
             this.dni = dni;
+            this.cuentaConCeros = cuentaConCeros;
         }
     }
 
@@ -183,12 +185,13 @@ public class MatchearDNI {
 
                 if (campos.length >= 5) {
                     String cuenta = campos[0];
+                    String cuentaConCeros = campos[1];  // NUEVO: Leer la cuenta con ceros (segunda columna)
                     String cod = campos[2];
                     String nombreyapellido = campos[3];
                     String dni = campos[4];
 
                     String cuentaNorm = normalizarCuenta(cuenta);
-                    dniDict.put(cuentaNorm, new PersonaConDNI(cod, nombreyapellido, dni));
+                    dniDict.put(cuentaNorm, new PersonaConDNI(cod, nombreyapellido, dni, cuentaConCeros));
 
                     contadorCarga++;
                     if (contadorCarga % 100000 == 0) {
@@ -233,9 +236,9 @@ public class MatchearDNI {
                         // Verificar similitud de nombres
                         double similitud = similitudNombre(nombreSinDNI, persona.nombreyapellido);
 
-                        // NUEVO: Agregar TODOS los encontrados con cualquier similitud
+                        // NUEVO: Usar la cuenta CON CEROS para encriptar más tarde
                         resultados.add(new Resultado(
-                            cuenta,
+                            persona.cuentaConCeros,  // MODIFICADO: Usar cuenta con ceros
                             nombreSinDNI,
                             persona.dni,
                             persona.cod,
