@@ -224,8 +224,8 @@ public class MatchearDNI {
 
                 if (campos.length >= 3) {
                     String cuenta = campos[0];
-                    String mail = campos[1];
-                    String nombreSinDNI = campos[2];
+                    String nombreSinDNI = campos[1];  // CAMBIADO: nombre ahora es la columna 2
+                    String mail = campos[2];           // CAMBIADO: mail ahora es la columna 3
 
                     String cuentaNorm = normalizarCuenta(cuenta);
 
