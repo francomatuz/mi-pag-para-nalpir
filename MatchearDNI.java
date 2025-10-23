@@ -299,29 +299,28 @@ public class MatchearDNI {
             List<Map.Entry<String, Integer>> listaOrdenada = new ArrayList<>(contadorPorCod.entrySet());
             listaOrdenada.sort((a, b) -> a.getKey().compareTo(b.getKey())); // Ordenar por COD
 
-            // Definir entidades permitidas (las que SI se van a encriptar)
-            Set<String> entidadesPermitidas = new HashSet<>(Arrays.asList(
-                "002", "004", "005", "007", "015", "024", "027", "031", "035", "036", "040", "042", "048",
-                "066", "069", "071", "074", "084", "090", "092", "093", "101", "106", "119", "129", "131",
-                "139", "140", "154", "160", "161", "163", "165", "167", "168", "170", "173", "176", "187",
-                "196", "218", "227", "234", "242", "243", "244", "247", "270"
+            // Definir entidades EXCLUIDAS (las que NO se van a encriptar - 24 entidades)
+            Set<String> entidadesExcluidas = new HashSet<>(Arrays.asList(
+                "002", "007", "013", "016", "026", "027", "035", "037", "038", "039",
+                "043", "045", "048", "056", "071", "074", "090", "142", "148", "165",
+                "170", "175", "189", "198"
             ));
 
             int totalPermitidas = 0;
             int totalNoPermitidas = 0;
 
-            System.out.println("\n--- Entidades que SI se van a encriptar (48 entidades) ---");
+            System.out.println("\n--- Entidades que SI se van a encriptar ---");
             for (Map.Entry<String, Integer> entry : listaOrdenada) {
-                if (entidadesPermitidas.contains(entry.getKey())) {
+                if (!entidadesExcluidas.contains(entry.getKey())) {
                     System.out.println("COD " + entry.getKey() + ": " + entry.getValue() + " personas");
                     totalPermitidas += entry.getValue();
                 }
             }
             System.out.println("TOTAL a encriptar: " + totalPermitidas + " personas");
 
-            System.out.println("\n--- Entidades que NO se van a encriptar ---");
+            System.out.println("\n--- Entidades que NO se van a encriptar (24 entidades excluidas) ---");
             for (Map.Entry<String, Integer> entry : listaOrdenada) {
-                if (!entidadesPermitidas.contains(entry.getKey())) {
+                if (entidadesExcluidas.contains(entry.getKey())) {
                     System.out.println("COD " + entry.getKey() + ": " + entry.getValue() + " personas");
                     totalNoPermitidas += entry.getValue();
                 }
